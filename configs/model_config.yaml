@@ -1,0 +1,48 @@
+# YOLO Model Configuration
+
+model:
+  # Model path (relative to project root or absolute path)
+  path: "models/yolov8n.pt"
+
+  # Alternative models:
+  # - yolov5n.pt  (fastest, lowest accuracy)
+  # - yolov8n.pt  (recommended for Raspberry Pi)
+  # - yolov8s.pt  (better accuracy, slower)
+  # - yolov8n.onnx (ONNX optimized version)
+
+  # Detection thresholds
+  confidence: 0.5  # 0.0 - 1.0
+  iou_threshold: 0.45  # IoU threshold for NMS
+
+  # Input image size (320, 416, 640, etc.)
+  input_size: 640
+
+  # Classes to detect (null for all classes, or list of class IDs)
+  # COCO dataset classes:
+  # 0: person, 1: bicycle, 2: car, 3: motorcycle, 5: bus, 7: truck
+  # 15: cat, 16: dog, 17: horse, 39: bottle, 41: cup
+  classes: null  # null = all classes
+  # classes: [0]  # Only detect persons
+  # classes: [0, 2, 3, 5, 7]  # Detect people and vehicles
+
+# Performance settings
+performance:
+  # Device: cpu, cuda, mps
+  device: "cpu"
+
+  # Half precision (FP16) - not supported on CPU
+  half_precision: false
+
+  # Number of worker threads
+  workers: 1
+
+# Model export settings (for optimization)
+export:
+  # Export format: onnx, tflite, torchscript
+  format: "onnx"
+
+  # Simplify ONNX model
+  simplify: true
+
+  # INT8 quantization for TFLite
+  int8: false
