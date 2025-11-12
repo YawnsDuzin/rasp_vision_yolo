@@ -392,6 +392,56 @@ python examples/object_tracker.py \
 
 ---
 
+### 🏥 9. 낙상 감지 시스템 (의료/헬스케어)
+
+```bash
+# 기본 실행
+python examples/fall_detection.py --camera usb
+
+# 설정 커스터마이징 및 알림
+python examples/fall_detection.py \
+  --camera usb \
+  --fall-angle 45 \
+  --fall-height-ratio 0.3 \
+  --record \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID
+```
+
+**기능**:
+- YOLOv8-pose 기반 실시간 포즈 추정
+- 17개 관절점(keypoints) 추적
+- 다중 낙상 감지 알고리즘:
+  - 몸통 각도 분석 (수평 자세 감지)
+  - 머리 높이 비율 분석
+  - 급격한 자세 변화 감지
+- 자동 녹화 및 알림
+- 포즈 타입 분류 (서있음/앉음/누움/낙상)
+
+**코드 예시**:
+```python
+from src.detection import PoseAnalyzer
+
+# 포즈 분석기 초기화
+analyzer = PoseAnalyzer(
+    fall_angle_threshold=45.0,  # 낙상 판정 각도
+    fall_height_ratio=0.3,      # 낙상 판정 높이 비율
+    confidence_threshold=0.5    # 키포인트 신뢰도
+)
+
+# 포즈 분석
+analysis = analyzer.analyze_pose(keypoints, keypoint_conf)
+
+if analysis['is_fall']:
+    print(f"낙상 감지! 신뢰도: {analysis['fall_confidence']*100:.0f}%")
+    print(f"포즈 타입: {analysis['pose_type']}")
+    print(f"몸통 각도: {analysis['body_angle']:.1f}도")
+```
+
+**활용**: 요양원, 병원, 독거노인 모니터링, 재활 센터
+
+---
+
 ## 성능 최적화
 
 ### 라즈베리파이 4 예상 성능

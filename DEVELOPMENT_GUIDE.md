@@ -1205,6 +1205,15 @@ examples/object_tracker.py
 - 체류 시간 측정
 - 히트맵 생성
 
+#### 낙상 감지 시스템
+```bash
+examples/fall_detection.py
+```
+- YOLOv8-pose 기반 포즈 추정
+- 실시간 낙상 감지
+- 자동 녹화 및 알림
+- 포즈 타입 분류
+
 ---
 
 ## 산업별 활용 사례
