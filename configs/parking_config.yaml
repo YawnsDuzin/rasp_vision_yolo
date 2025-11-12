@@ -1,0 +1,75 @@
+# Parking Space Configuration
+# 주차 공간 설정 파일
+
+parking_spaces:
+  # 주차 공간 1
+  - id: 1
+    name: "A-1"
+    points:  # 4개의 꼭지점 좌표 (시계방향)
+      - [50, 200]
+      - [150, 200]
+      - [150, 350]
+      - [50, 350]
+    reserved: false
+    type: "regular"
+
+  # 주차 공간 2
+  - id: 2
+    name: "A-2"
+    points:
+      - [170, 200]
+      - [270, 200]
+      - [270, 350]
+      - [170, 350]
+    reserved: false
+    type: "regular"
+
+  # 주차 공간 3
+  - id: 3
+    name: "A-3"
+    points:
+      - [290, 200]
+      - [390, 200]
+      - [390, 350]
+      - [290, 350]
+    reserved: false
+    type: "regular"
+
+  # 주차 공간 4 (예약석)
+  - id: 4
+    name: "A-4"
+    points:
+      - [410, 200]
+      - [510, 200]
+      - [510, 350]
+      - [410, 350]
+    reserved: true
+    type: "reserved"
+
+  # 장애인 주차 공간 예시
+  - id: 5
+    name: "B-1"
+    points:
+      - [50, 370]
+      - [180, 370]
+      - [180, 470]
+      - [50, 470]
+    reserved: true
+    type: "handicapped"
+
+# 알림 설정
+notifications:
+  # 점유율이 이 값을 초과하면 알림
+  occupancy_threshold: 90
+
+  # 불법 주차 감지 (예약석)
+  illegal_parking_alert: true
+
+  # 알림 쿨다운 (초)
+  cooldown_seconds: 300
+
+# 설정 도구 사용법:
+# 1. 주차장 영상 스크린샷 찍기
+# 2. 이미지 편집 도구로 각 주차 공간의 4개 꼭지점 좌표 확인
+# 3. 위 형식으로 좌표 입력
+# 4. --config 옵션으로 이 파일 지정

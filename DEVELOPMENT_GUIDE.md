@@ -887,9 +887,307 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 
 ---
 
+## 구현된 활용 코드
+
+이 프로젝트에는 산업별 활용을 위한 실용적인 코드가 구현되어 있습니다.
+
+### 1. 침입 감지 시스템 (IntrusionDetector)
+
+**위치**: `src/detection/intrusion_detector.py`
+
+**기능**:
+- ROI(Region of Interest) 기반 침입 감지
+- 특정 영역 내 객체 진입 시 자동 알림
+- 쿨다운 시스템으로 알림 스팸 방지
+- 침입 통계 추적
+
+**사용 예시**:
+```python
+from src.detection import IntrusionDetector
+
+# ROI 정의 (다각형 좌표)
+roi = [(200, 150), (440, 150), (440, 330), (200, 330)]
+
+# 침입 감지기 초기화
+detector = IntrusionDetector(
+    roi_points=roi,
+    target_classes=[0],  # 0 = person
+    cooldown_seconds=5
+)
+
+# 탐지 결과로 침입 체크
+intrusion, intruders = detector.check_intrusion(detections)
+
+if intrusion and detector.should_alert():
+    detector.trigger_alert()
+    print(f"침입 감지! {len(intruders)}명")
+```
+
+**실행 방법**:
+```bash
+# 기본 실행
+python examples/intrusion_detection.py --camera usb
+
+# 텔레그램 알림 포함
+python examples/intrusion_detection.py \
+  --camera usb \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID \
+  --save-alerts
+```
+
+**활용 분야**: 보안, 감시, 출입 통제
+
+---
+
+### 2. 라인 통과 카운팅 (LineCrossingCounter)
+
+**위치**: `src/detection/line_counter.py`
+
+**기능**:
+- 가상 라인 통과 카운팅
+- 양방향 카운팅 지원 (IN/OUT)
+- 객체 추적 기반 정확한 카운팅
+- 중복 카운팅 방지
+
+**사용 예시**:
+```python
+from src.detection import LineCrossingCounter
+
+# 카운팅 라인 정의
+line_start = (0, 240)
+line_end = (640, 240)
+
+# 카운터 초기화
+counter = LineCrossingCounter(
+    line_start=line_start,
+    line_end=line_end,
+    target_classes=[0],  # person only
+    bidirectional=True
+)
+
+# 추적 정보를 포함한 탐지 결과로 업데이트
+count_in, count_out, crossed = counter.update(detections)
+
+print(f"IN: {count_in}, OUT: {count_out}")
+```
+
+**실행 방법**:
+```bash
+# 기본 실행
+python examples/people_counting.py --camera usb
+
+# 정기 리포트 전송 (60초마다)
+python examples/people_counting.py \
+  --camera usb \
+  --report-interval 60 \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID
+```
+
+**활용 분야**: 리테일, 스마트시티, 교통 분석
+
+---
+
+### 3. 주차 공간 모니터링 (ParkingSpaceMonitor)
+
+**위치**: `src/detection/specialized_detectors.py`
+
+**기능**:
+- 다중 주차 공간 점유 상태 추적
+- 실시간 가용 공간 카운팅
+- 예약석 관리
+- 불법 주차 감지
+
+**사용 예시**:
+```python
+from src.detection import ParkingSpaceMonitor
+
+# 주차 공간 정의
+parking_spaces = [
+    {
+        'id': 1,
+        'points': [(50, 200), (150, 200), (150, 350), (50, 350)],
+        'reserved': False
+    },
+    # ... 추가 공간
+]
+
+# 모니터 초기화
+monitor = ParkingSpaceMonitor(parking_spaces)
+
+# 차량 탐지 결과로 점유 상태 확인
+space_status = monitor.check_occupancy(vehicles)
+
+# 통계 조회
+stats = monitor.get_statistics()
+print(f"가용 공간: {stats['available']}개")
+```
+
+**실행 방법**:
+```bash
+# 기본 실행 (내장 설정)
+python examples/parking_monitor.py --camera usb
+
+# 설정 파일 사용
+python examples/parking_monitor.py \
+  --camera rtsp \
+  --url rtsp://camera-ip/stream \
+  --config configs/parking_config.yaml
+```
+
+**활용 분야**: 스마트시티, 주차장 관리
+
+---
+
+### 4. 안전장비 착용 확인 (SafetyEquipmentDetector)
+
+**위치**: `src/detection/specialized_detectors.py`
+
+**기능**:
+- 헬멧, 안전조끼, 안전화 착용 확인
+- 사람과 장비 매칭 알고리즘
+- 위반자 자동 감지
+- 준수율 통계
+
+**사용 예시**:
+```python
+from src.detection import SafetyEquipmentDetector
+
+# 필수 장비 정의
+detector = SafetyEquipmentDetector(
+    required_equipment=['helmet', 'vest'],
+    check_distance_threshold=100
+)
+
+# 사람과 장비 탐지 결과 분리
+persons = [d for d in detections if d['class_name'] == 'person']
+equipment = [d for d in detections if d['class_name'] in ['helmet', 'vest']]
+
+# 준수 여부 확인
+compliant, violations = detector.check_compliance(persons, equipment)
+
+print(f"위반자: {len(violations)}명")
+for person in violations:
+    print(f"  - 누락 장비: {', '.join(person['missing'])}")
+```
+
+**활용 분야**: 제조, 건설, 산업 안전
+
+---
+
+### 5. 알림 시스템 (TelegramNotifier, EmailNotifier)
+
+**위치**: `src/utils/notifier.py`
+
+**기능**:
+- 텔레그램 봇을 통한 실시간 알림
+- 이메일 알림 (이미지 첨부 지원)
+- 다중 채널 통합 관리
+- 알림 템플릿 자동 생성
+
+**텔레그램 사용 예시**:
+```python
+from src.utils import TelegramNotifier
+
+# 알림 초기화
+notifier = TelegramNotifier(
+    bot_token='YOUR_BOT_TOKEN',
+    chat_id='YOUR_CHAT_ID'
+)
+
+# 간단한 메시지
+notifier.send_message("시스템 시작됨")
+
+# 이미지와 함께 알림
+notifier.send_alert(
+    alert_type='intrusion',
+    message='침입자 탐지!\n위치: 정문\n시간: 14:30',
+    image_path='alert.jpg'
+)
+```
+
+**이메일 사용 예시**:
+```python
+from src.utils import EmailNotifier
+
+# 이메일 알림 초기화
+notifier = EmailNotifier(
+    smtp_server='smtp.gmail.com',
+    smtp_port=587,
+    sender_email='your@gmail.com',
+    sender_password='app_password',
+    recipient_email='recipient@example.com'
+)
+
+# 알림 전송
+notifier.send_alert(
+    alert_type='violation',
+    message='안전장비 미착용 감지',
+    image_path='violation.jpg'
+)
+```
+
+**다중 채널 사용**:
+```python
+from src.utils import MultiNotifier
+
+# 모든 채널 통합
+notifier = MultiNotifier()
+notifier.add_telegram(bot_token, chat_id)
+notifier.add_email(smtp_server, smtp_port, sender, password, recipient)
+
+# 모든 채널로 동시 전송
+notifier.send_alert('alert', '중요 이벤트 발생!')
+```
+
+**환경 설정**:
+```bash
+# .env 파일 생성
+cp .env.example .env
+
+# 필수 값 설정
+TELEGRAM_BOT_TOKEN=your_token
+TELEGRAM_CHAT_ID=your_chat_id
+```
+
+**활용 분야**: 모든 산업 (범용)
+
+---
+
+### 실용 예제 스크립트
+
+#### 침입 감지 시스템
+```bash
+examples/intrusion_detection.py
+```
+- ROI 기반 침입 감지
+- 실시간 알림
+- 통계 추적
+
+#### 사람 카운팅
+```bash
+examples/people_counting.py
+```
+- 양방향 카운팅
+- 정기 리포트
+- 통계 대시보드
+
+#### 주차장 모니터링
+```bash
+examples/parking_monitor.py
+```
+- 다중 공간 추적
+- 가용 공간 표시
+- 점유율 분석
+
+---
+
 ## 산업별 활용 사례
 
 ### 1. 보안 및 감시
+
+**구현 코드**: `examples/intrusion_detection.py`
 
 **용도**:
 - 침입 감지 시스템
@@ -906,6 +1204,8 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 
 ### 2. 스마트 시티
 
+**구현 코드**: `examples/people_counting.py`, `examples/parking_monitor.py`
+
 **용도**:
 - 교통량 분석
 - 주차 공간 관리
@@ -913,15 +1213,32 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 - 가로등 제어
 
 **구현 예시**:
-- 실시간 교통 혼잡도 측정
-- 불법 주차 탐지
+- 실시간 교통 혼잡도 측정 (LineCrossingCounter)
+- 불법 주차 탐지 (ParkingSpaceMonitor)
 - 보행자 안전 모니터링
+
+**실제 구현 기능**:
+```python
+# 교통량 카운팅
+counter = LineCrossingCounter(
+    line_start=(0, 300),
+    line_end=(640, 300),
+    target_classes=[2, 3, 5, 7]  # 차량 클래스
+)
+
+# 주차 공간 모니터링
+monitor = ParkingSpaceMonitor(parking_spaces)
+stats = monitor.get_statistics()
+print(f"가용 주차 공간: {stats['available']}개")
+```
 
 **관련 프로젝트**:
 - 서울시 스마트시티 (2024)
 - 싱가포르 Smart Nation
 
 ### 3. 제조 및 품질 관리
+
+**구현 코드**: `src/detection/specialized_detectors.py` (SafetyEquipmentDetector)
 
 **용도**:
 - 제품 결함 탐지
@@ -930,9 +1247,26 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 - 재고 관리
 
 **구현 예시**:
-- PCB 결함 검사
-- 헬멧/안전복 미착용자 감지
+- PCB 결함 검사 (커스텀 모델 학습 필요)
+- 헬멧/안전복 미착용자 감지 (SafetyEquipmentDetector)
 - 부품 누락 확인
+
+**실제 구현 기능**:
+```python
+# 안전장비 착용 확인
+detector = SafetyEquipmentDetector(
+    required_equipment=['helmet', 'vest'],
+    check_distance_threshold=100
+)
+
+compliant, violations = detector.check_compliance(persons, equipment)
+
+# 위반자 알림
+if violations:
+    for person in violations:
+        print(f"위반: {person['missing']}")
+        notifier.send_alert('violation', f"안전장비 미착용 감지")
+```
 
 **정확도**: 99%+ (맞춤 학습 모델)
 
@@ -953,6 +1287,8 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 
 ### 5. 리테일 (소매업)
 
+**구현 코드**: `examples/people_counting.py`, `src/detection/intrusion_detector.py`
+
 **용도**:
 - 고객 동선 분석
 - 재고 모니터링
@@ -960,9 +1296,24 @@ def send_telegram_alert(bot_token, chat_id, message, image_path=None):
 - 셀프 계산대
 
 **구현 예시**:
-- 히트맵 생성 (고객 관심 영역)
-- 빈 선반 감지
-- 이상 행동 탐지
+- 고객 입장/퇴장 카운팅 (LineCrossingCounter)
+- 제한 구역 침입 감지 (IntrusionDetector)
+- 매장 혼잡도 분석
+
+**실제 구현 기능**:
+```python
+# 고객 카운팅 (입장/퇴장)
+counter = LineCrossingCounter(
+    line_start=(320, 0),
+    line_end=(320, 480),
+    target_classes=[0],  # person
+    bidirectional=True
+)
+
+# 시간대별 통계 수집
+stats = counter.get_statistics()
+print(f"총 방문자: {stats['total']}명")
+```
 
 **효과**: 30% 도난 감소, 20% 재고 효율 증가
 

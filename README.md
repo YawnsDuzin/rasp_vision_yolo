@@ -4,12 +4,15 @@
 
 ## 주요 기능
 
-- 🎥 다양한 카메라 지원 (CSI, USB, RTSP)
-- 🤖 YOLOv5/v8/v11 모델 지원
-- 🎯 실시간 객체 탐지 및 추적
-- 🚨 침입 감지 및 알림
-- 📊 객체 카운팅 및 통계
-- ⚡ 라즈베리파이 최적화
+- 🎥 **다양한 카메라 지원** (CSI, USB, RTSP)
+- 🤖 **YOLOv5/v8/v11 모델** 지원
+- 🎯 **실시간 객체 탐지 및 추적**
+- 🚨 **침입 감지** 및 실시간 알림
+- 📊 **라인 통과 카운팅** (양방향)
+- 🅿️ **주차 공간 모니터링**
+- 🦺 **안전장비 착용 확인**
+- 📱 **텔레그램/이메일 알림**
+- ⚡ **라즈베리파이 최적화**
 
 ## 시스템 요구사항
 
@@ -150,44 +153,166 @@ performance:
   device: "cpu"
 ```
 
-## 주요 기능 예시
+## 실용 예제 시나리오
 
-### 1. 침입 감지
+### 🚨 1. 침입 감지 시스템 (보안)
 
+```bash
+# 기본 실행
+python examples/intrusion_detection.py --camera usb
+
+# 텔레그램 알림 포함
+python examples/intrusion_detection.py \
+  --camera usb \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID \
+  --save-alerts
+```
+
+**기능**:
+- ROI 기반 침입 감지
+- 실시간 텔레그램 알림
+- 침입 이미지 자동 저장
+- 통계 추적
+
+**코드 예시**:
 ```python
-from src.detection.intrusion_detector import IntrusionDetector
+from src.detection import IntrusionDetector
 
 # ROI 정의 (다각형)
-roi = [(100, 100), (500, 100), (500, 400), (100, 400)]
+roi = [(200, 150), (440, 150), (440, 330), (200, 330)]
 
-detector = IntrusionDetector(model_path='yolov8n.pt', roi=roi)
-# ... 카메라 루프에서 사용
+detector = IntrusionDetector(
+    roi_points=roi,
+    target_classes=[0],  # 사람만 탐지
+    cooldown_seconds=5
+)
+
+intrusion, intruders = detector.check_intrusion(detections)
+if intrusion and detector.should_alert():
+    detector.trigger_alert()
 ```
 
-### 2. 객체 카운팅
+---
 
+### 👥 2. 사람 카운팅 (리테일/스마트시티)
+
+```bash
+# 기본 실행
+python examples/people_counting.py --camera usb
+
+# 정기 리포트 전송
+python examples/people_counting.py \
+  --camera usb \
+  --report-interval 60 \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID
+```
+
+**기능**:
+- 양방향 라인 통과 카운팅
+- IN/OUT 통계
+- 정기 리포트 자동 전송
+- 실시간 대시보드
+
+**코드 예시**:
 ```python
-from src.detection.line_counter import LineCounter
+from src.detection import LineCrossingCounter
 
 # 카운팅 라인 정의
-line = (0, 300, 640, 300)  # (x1, y1, x2, y2)
+counter = LineCrossingCounter(
+    line_start=(0, 240),
+    line_end=(640, 240),
+    target_classes=[0],  # person
+    bidirectional=True
+)
 
-counter = LineCounter(line_position=line)
-# ... 추적과 함께 사용
+count_in, count_out, crossed = counter.update(detections)
 ```
 
-### 3. 알림 설정
+---
+
+### 🅿️ 3. 주차장 모니터링 (스마트시티)
+
+```bash
+# 기본 실행
+python examples/parking_monitor.py --camera usb
+
+# 설정 파일 사용
+python examples/parking_monitor.py \
+  --camera rtsp \
+  --url rtsp://camera-ip/stream \
+  --config configs/parking_config.yaml
+```
+
+**기능**:
+- 다중 주차 공간 추적
+- 실시간 가용 공간 표시
+- 점유율 통계
+- 예약석/장애인석 관리
+
+**코드 예시**:
+```python
+from src.detection import ParkingSpaceMonitor
+
+# 주차 공간 정의
+parking_spaces = [
+    {'id': 1, 'points': [(50, 200), (150, 200), ...], 'reserved': False},
+    # ... 추가 공간
+]
+
+monitor = ParkingSpaceMonitor(parking_spaces)
+space_status = monitor.check_occupancy(vehicles)
+stats = monitor.get_statistics()
+```
+
+---
+
+### 🦺 4. 안전장비 착용 확인 (제조/건설)
+
+**코드 예시**:
+```python
+from src.detection import SafetyEquipmentDetector
+
+# 필수 장비 정의
+detector = SafetyEquipmentDetector(
+    required_equipment=['helmet', 'vest'],
+    check_distance_threshold=100
+)
+
+# 사람과 장비 분리
+persons = [d for d in detections if d['class_name'] == 'person']
+equipment = [d for d in detections if d['class_name'] in ['helmet', 'vest']]
+
+# 준수 여부 확인
+compliant, violations = detector.check_compliance(persons, equipment)
+```
+
+---
+
+### 📱 5. 알림 시스템
 
 ```python
-from src.utils.notifier import TelegramNotifier
+from src.utils import TelegramNotifier, MultiNotifier
 
+# 텔레그램 알림
 notifier = TelegramNotifier(
     bot_token='YOUR_BOT_TOKEN',
     chat_id='YOUR_CHAT_ID'
 )
 
-# 탐지 시 알림 전송
-notifier.send_alert("침입자 탐지!", image_path='alert.jpg')
+# 이미지와 함께 알림 전송
+notifier.send_alert(
+    alert_type='intrusion',
+    message='침입자 탐지!\n위치: 정문',
+    image_path='alert.jpg'
+)
+
+# 다중 채널 통합
+multi = MultiNotifier()
+multi.add_telegram(token, chat_id)
+multi.add_email(smtp_server, smtp_port, sender, password, recipient)
+multi.send_alert('alert', '중요 이벤트 발생!')
 ```
 
 ## 성능 최적화
