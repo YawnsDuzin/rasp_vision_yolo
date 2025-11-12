@@ -315,6 +315,83 @@ multi.add_email(smtp_server, smtp_port, sender, password, recipient)
 multi.send_alert('alert', '중요 이벤트 발생!')
 ```
 
+---
+
+### 📊 6. 혼잡도 분석 (스마트시티/이벤트)
+
+```bash
+# 기본 실행
+python examples/crowd_density.py --camera usb
+
+# 임계값 설정 및 알림
+python examples/crowd_density.py \
+  --camera usb \
+  --threshold-low 5 \
+  --threshold-medium 10 \
+  --threshold-high 15 \
+  --telegram-token YOUR_TOKEN \
+  --telegram-chat-id YOUR_CHAT_ID
+```
+
+**기능**:
+- 다중 영역 혼잡도 모니터링
+- 실시간 밀도 분석 (LOW/MEDIUM/HIGH)
+- 영역별 평균 인원 추적
+- 혼잡도 경고 알림
+
+**활용**: 스마트시티, 이벤트 관리, 쇼핑몰, 지하철역
+
+---
+
+### 🎥 7. 이벤트 기반 자동 녹화
+
+```bash
+# 기본 실행 (사람 탐지 시 녹화)
+python examples/event_recorder.py --camera usb
+
+# 설정 커스터마이징
+python examples/event_recorder.py \
+  --camera usb \
+  --trigger-classes 0 2 3 \  # person, car, motorcycle
+  --min-objects 2 \
+  --pre-event 5 \
+  --post-event 10
+```
+
+**기능**:
+- 특정 객체 탐지 시 자동 녹화
+- 이벤트 전후 프레임 버퍼링
+- 최대 파일 크기 관리
+- 녹화 파일 자동 저장
+
+**활용**: 보안 CCTV, 증거 수집, 이벤트 기록
+
+---
+
+### 🎯 8. 고급 객체 추적
+
+```bash
+# 기본 실행
+python examples/object_tracker.py --camera usb
+
+# 히트맵 포함
+python examples/object_tracker.py \
+  --camera usb \
+  --dwell-threshold 3 \
+  --show-heatmap
+```
+
+**기능**:
+- 객체별 고유 ID 추적
+- 이동 경로 시각화
+- 체류 시간 측정
+- 이동 속도 계산
+- 히트맵 생성 (방문 밀도)
+
+**활용**: 리테일 동선 분석, 행동 패턴 연구, 보안 모니터링
+
+---
+
 ## 성능 최적화
 
 ### 라즈베리파이 4 예상 성능

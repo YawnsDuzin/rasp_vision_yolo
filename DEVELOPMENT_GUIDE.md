@@ -1181,6 +1181,30 @@ examples/parking_monitor.py
 - 가용 공간 표시
 - 점유율 분석
 
+#### 혼잡도 분석
+```bash
+examples/crowd_density.py
+```
+- 다중 영역 밀도 분석
+- 실시간 혼잡도 레벨
+- 영역별 통계
+
+#### 이벤트 기반 녹화
+```bash
+examples/event_recorder.py
+```
+- 자동 비디오 녹화
+- 이벤트 전후 버퍼링
+- 파일 크기 관리
+
+#### 고급 객체 추적
+```bash
+examples/object_tracker.py
+```
+- 이동 경로 추적
+- 체류 시간 측정
+- 히트맵 생성
+
 ---
 
 ## 산업별 활용 사례
